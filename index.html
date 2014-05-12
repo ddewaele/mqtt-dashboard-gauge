@@ -80,21 +80,22 @@
       
         <div class="content">
             <p>
-            <b>Step 1 : </b>Change this index.html and add your MQTT broker connection params:
-            <p>
+            <b>Step 1 : </b>Fill in your own broker or use the one from the kidn people at broker.mqttdashboard.com. (but be gentle...)
+            </p>
             <pre>
     var client = new Messaging.Client('broker.mqttdashboard.com', 8000, 'myclientid1234');
             </pre>
             <p>
-            <b>Step 2 : </b>Subscribe to a topic
+            <b>Step 2 : </b>Have the javascript client subscribe to a topic.
             </p>
             <pre>
     client.subscribe('testGaugeTopic/#', {qos: 2});  
             </pre>
 
             <p>
-            <b>Step 3 : </b>Start sending messages
+            <b>Step 3 : </b>Start sending messages by copying this into your shell...
             </p>
+
             <pre>
     for i in {1..100}
     do
