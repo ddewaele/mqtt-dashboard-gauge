@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>      
+        <title>Palette for Ranges</title>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <script src="js/mqttws31.js" type="text/javascript"></script>
+        <link href="css/styles.css" rel="stylesheet" />
+        <script src="js/jquery-1.10.2.min.js"></script>
+        <script src="js/knockout-3.0.0.js"></script>
+        <script src="js/globalize.min.js"></script>
+        <script src="js/dx.chartjs.js"></script>
+    </head>
+    
+    <script type="text/javascript">
+    
+    var client = new Messaging.Client('broker.mqttdashboard.com', 8000, 'myclientid1234');
+    
+    client.onMessageArrived = function (message) {
+        console.log(message.destinationName + '  | ' + message.payloadString);
+        $('#chartContainer').dxCircularGauge('instance').value(message.payloadString);
+
+    };
+        
+    var options = {
+        timeout: 3,
+        
+        onSuccess: function () {
+            console.log("Connected");
+            client.subscribe('testGaugeTopic/#', {qos: 2});
+        },
+ 
+        onFailure: function (message) {
+            alert("Connection failed: " + message.errorMessage);
+        }
+ 
+    };
+ 
+	function init() {
+		client.connect(options);
+
+        $(function ()  {
+            $('#chartContainer').dxCircularGauge({
+                scale: {
+                    startValue: 0,
+                    endValue: 120,
+                    majorTick: {
+                        tickInterval: 10
+                    }
+                },
+                rangeContainer: {
+                    palette: 'pastel',
+                    ranges: [
+                        { startValue: 50, endValue: 90 },
+                        { startValue: 90, endValue: 130 },
+                        { startValue: 130, endValue: 150 },
+                    ]
+                },
+                title: {
+                    text: 'Vehicle Speed',
+                    font: { size: 28 }
+                },
+                value: 105
+            });
+        });
+
+	}
+ 
+    </script>
+ 
+</head>
+<body onload="init();">
+
+      
+        <div class="line"/>
+
+        <div class="title">
+            <h1>MQTT Demo</h1>&nbsp;&nbsp;&nbsp;<h2>Simple Gauge</h2>
+        </div>
+      
+        <div class="content">
+            <p>
+            <b>Step 1 : </b>Change this index.html and add your MQTT broker connection params:
+            <p>
+            <pre>
+    var client = new Messaging.Client('broker.mqttdashboard.com', 8000, 'myclientid1234');
+            </pre>
+            <p>
+            <b>Step 2 : </b>Subscribe to a topic
+            </p>
+            <pre>
+    client.subscribe('testGaugeTopic/#', {qos: 2});  
+            </pre>
+
+            <p>
+            <b>Step 3 : </b>Start sending messages
+            </p>
+            <pre>
+    for i in {1..100}
+    do
+        mosquitto_pub -h broker.mqttdashboard.com -t testGaugeTopic/liveData --qos 2 -m "$(((RANDOM%120)+1))"
+        sleep 1 
+    done    
+            </pre>
+            <div class="pane">
+                <div id="chartContainer" class="case-container" style="width: 100%; height: 440px;"></div>
+            </div>
+        </div>
+
+</body>
+ 
+</html>
