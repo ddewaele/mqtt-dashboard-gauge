@@ -99,7 +99,6 @@
     for i in {1..100}
     do
         mosquitto_pub -h broker.mqttdashboard.com -t testGaugeTopic/liveData --qos 2 -m "$(((RANDOM%120)+1))"
-        sleep 1 
     done    
             </pre>
             <div class="pane">
