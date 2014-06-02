@@ -45,11 +45,25 @@
             marker.setPosition(latlng);
             map.panTo(latlng);
         }
-          
+
+        function generateClientId() {
+            var text = "";
+            var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+
+            for( var i=0; i < 10; i++ )
+                text += possible.charAt(Math.floor(Math.random() * possible.length));
+
+            return text;
+        }
+                  
         google.maps.event.addDomListener(window, 'load', initialize);
 
+
+	var clientId = generateClientId();
+
+    console.log("Connecting with clientId : " + clientId); 
     
-    var client = new Messaging.Client('broker.mqttdashboard.com', 8000, 'myclientid1234');
+    var client = new Messaging.Client('broker.mqttdashboard.com', 8000, clientId);
     
     client.onMessageArrived = function (message) {
         console.log(message.destinationName + '  | ' + message.payloadString);
