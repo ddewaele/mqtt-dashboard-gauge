@@ -10,19 +10,63 @@
         <script src="js/knockout-3.0.0.js"></script>
         <script src="js/globalize.min.js"></script>
         <script src="js/dx.chartjs.js"></script>
+
+        <script type="text/javascript" src="https://maps.googleapis.com/maps/api/js"></script>
+        
     </head>
     
     <script type="text/javascript">
+
+        var map;
+        var marker;
+
+        function initialize() {
+
+            var myLatlng = new google.maps.LatLng(-34.397, 150.644)
+
+            // Google Maps initialization
+            var mapOptions = {
+              center: myLatlng,
+              zoom: 8
+            };
+            map = new google.maps.Map(document.getElementById("map-canvas"),
+                mapOptions);
+
+            marker = new google.maps.Marker({
+                position: myLatlng,
+                map: map,
+                title:"Hello World!"
+            });
+
+        }
+
+        function changeMarkerPosition(marker,lat,lng) {
+            var latlng = new google.maps.LatLng(lat,lng);
+            marker.setPosition(latlng);
+            map.panTo(latlng);
+        }
+          
+        google.maps.event.addDomListener(window, 'load', initialize);
+
     
     var client = new Messaging.Client('broker.mqttdashboard.com', 8000, 'myclientid1234');
     
     client.onMessageArrived = function (message) {
         console.log(message.destinationName + '  | ' + message.payloadString);
-        $('#chartContainer').dxCircularGauge('instance').value(message.payloadString);
 
+        var rpm = message.payloadString.split("|")[0];
+        var speed = message.payloadString.split("|")[1];
+
+        var lat = message.payloadString.split("|")[2];
+        var lng = message.payloadString.split("|")[3];
+
+        $('#chartContainer').dxCircularGauge('instance').value(rpm);
+        $('#chartContainer2').dxCircularGauge('instance').value(speed);
+
+        changeMarkerPosition(marker,lat, lng);
     };
         
-    var options = {
+    var mqttOptions = {
         timeout: 3,
         
         onSuccess: function () {
@@ -36,40 +80,87 @@
  
     };
  
-    function init() {
-        client.connect(options);
+	function init() {
+		client.connect(mqttOptions);
 
         $(function ()  {
             $('#chartContainer').dxCircularGauge({
                 scale: {
                     startValue: 0,
-                    endValue: 120,
+                    endValue: 6000,
                     majorTick: {
-                        tickInterval: 10
+                        tickInterval: 1000
                     }
                 },
                 rangeContainer: {
                     palette: 'pastel',
                     ranges: [
-                        { startValue: 50, endValue: 90 },
-                        { startValue: 90, endValue: 130 },
-                        { startValue: 130, endValue: 150 },
+                        { startValue: 0, endValue: 2000 },
+                        { startValue: 2000, endValue: 4000 },
+                        { startValue: 4000, endValue: 6000 },
                     ]
                 },
                 title: {
-                    text: 'Vehicle Speed',
-                    font: { size: 28 }
+                    text: 'RPM',
+                    font: { size: 20 }
                 },
-                value: 105
+                value: 2345
             });
+
+
+            $('#chartContainer2').dxCircularGauge({
+                scale: {
+                    startValue: 0,
+                    endValue: 280,
+                    majorTick: {
+                        color: '#1A1100',
+                        tickInterval: 30
+                    },
+                    minorTick: {
+                        color: '#1A1100',
+                        visible: true,
+                        tickInterval: 10
+                    }
+                },
+                rangeContainer: {
+                    backgroundColor: 'none'
+                },
+                title: {
+                    text: 'Speed (in km/u)',
+                    font: { size: 20 }
+                },
+                value: 90
+            });
+
+            $('#chartContainer3').dxLinearGauge({
+                geometry: { orientation: 'vertical' },
+                scale: {
+                    startValue: 0,
+                    endValue: 100,
+                    majorTick: {
+                        customTickValues: [0, 10, 25, 50, 75, 85, 100],
+                        showCalculatedTicks: false
+                    }
+                },
+                title: {
+                    text: 'Fuel (in %)',
+                    font: { size: 20 }
+                },
+                value: 35
+            });            
+
+
+
         });
 
-    }
+	}
  
     </script>
  
 </head>
 <body onload="init();">
+
+<a href="https://github.com/ddewaele/mqtt-dashboard-gauge"><img style="position: absolute; top: 0; left: 0; border: 0;" src="https://camo.githubusercontent.com/82b228a3648bf44fc1163ef44c62fcc60081495e/68747470733a2f2f73332e616d617a6f6e6177732e636f6d2f6769746875622f726962626f6e732f666f726b6d655f6c6566745f7265645f6161303030302e706e67" alt="Fork me on GitHub" data-canonical-src="https://s3.amazonaws.com/github/ribbons/forkme_left_red_aa0000.png"></a>
 
       
         <div class="line"/>
@@ -80,7 +171,7 @@
       
         <div class="content">
             <p>
-            <b>Step 1 : </b>Fill in your own broker or use the one from the kidn people at broker.mqttdashboard.com. (but be gentle...)
+            <b>Step 1 : </b>Fill in your own broker or use the one from the kind people at broker.mqttdashboard.com. (but be gentle...)
             </p>
             <pre>
     var client = new Messaging.Client('broker.mqttdashboard.com', 8000, 'myclientid1234');
@@ -99,13 +190,27 @@
             <pre>
     for i in {1..100}
     do
-        mosquitto_pub -h broker.mqttdashboard.com -t testGaugeTopic/liveData --qos 2 -m "$(((RANDOM%120)+1))"
+        mosquitto_pub -h broker.mqttdashboard.com -t testGaugeTopic/liveData --qos 2 -m "$(((RANDOM%6500)+1))|$(((RANDOM%120)+1))|40.69847032728747|-73.9514422416687";
     done    
             </pre>
+            <p>Or <a href="trip-playback.sh">download this shell script</a> for some dummy data</p>
             <div class="pane">
-                <div id="chartContainer" class="case-container" style="width: 100%; height: 440px;"></div>
+                <table>
+                    <tr><td>
+                <div id="chartContainer" class="case-container" style="float:left; width: 100%; height: 240px;"></div>
+            </td><td>
+                <div id="chartContainer2" class="case-container" style="float:right; width: 100%; height: 240px;"></div>
+            </td><td>
+                <div id="chartContainer3" class="case-container" style="float:right; width: 100%; height: 240px;"></div>
+            </td></tr>
+            </table>
+            <div id="map-canvas"/>
             </div>
         </div>
+
+
+
+
 
 </body>
  
